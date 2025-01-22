@@ -1,0 +1,156 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,amsfonts}
+\usepackage{hyperref}
+\usepackage{graphicx}
+
+\title{On-Demand Schema Migrations for Multi-Model Data Integration:\\
+A Topos-Theoretic and Generative AI Perspective}
+\author{Matthew Long \\
+\texttt{Magneton Labs}}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Modern enterprises often store their data across heterogeneous systems: relational databases, NoSQL document stores, and graph databases. This diversity poses challenges for schema migrations, especially when queries or analytics must draw on data stored in incompatible models. In this paper, we detail a topos-theoretic perspective on schema migrations, demonstrate on-demand transformations that allow users and applications to query data regardless of its storage model, and highlight how generative AI agents can leverage these concepts to unify multi-model data seamlessly. We offer mathematical formalisms for data-model transformations, show the benefits of this approach, and present a Haskell-based sample implementation for a schema migration engine.
+\end{abstract}
+
+\section{Introduction}
+As data proliferates across relational, document, and graph databases, organizations face persistent challenges in aligning or migrating schemas. Often, the need arises dynamically during query execution: a user or application attempts to fetch data that resides in a different representation, potentially with incompatible schemas. Traditionally, schema migrations are large, planned events. Here, we argue for a more fluid, on-demand approach based on category and topos theory.
+
+Moreover, with the rise of \emph{generative AI agents}, user queries tend to span multiple data sources. AI agents need consistent, high-level views of data to provide meaningful answers. A robust on-demand schema migration or virtualization strategy can streamline these queries without forcing constant data duplication.
+
+\subsection{Related Work}
+Category theory has influenced database theory for decades. Functorial data migration \cite{SpivakFQL} represents schema changes as functors between categories, while topos-theoretic approaches \cite{JohnstoneSketches} provide a unifying framework for logical interpretation. This paper extends these ideas with an emphasis on \emph{real-time, on-demand transformations} and \emph{AI-driven multi-model queries}.
+
+\subsection{Contributions}
+\begin{itemize}
+    \item We demonstrate the \textbf{usefulness of schema migrations} as an ongoing, rather than one-time, process.
+    \item We illustrate \textbf{on-demand transformations} for queries crossing data models in real-world deployments.
+    \item We detail how \textbf{generative AI agents} can exploit these transformations, discussing scenarios where data is scattered across heterogeneous backends.
+    \item We provide \textbf{mathematical equations} and definitions capturing topos-theoretic data modeling.
+    \item We conclude with a \textbf{sample Haskell code} outlining an implementation blueprint.
+\end{itemize}
+
+\section{Usefulness of Schema Migrations in Multi-Model Contexts}
+\label{sec:usefulness}
+
+\textbf{Schema migrations} enable:
+\begin{enumerate}
+    \item \textbf{Evolving Business Requirements}: As organizations refine data requirements, schemas must adapt to new fields or constraints.
+    \item \textbf{Maintain Data Integrity}: Automated transformations preserve referential integrity and data consistency across changing structures.
+    \item \textbf{Heterogeneous Store Integration}: Relational, NoSQL, and graph stores have diverse schema representations. Migrations unify them under consistent, interpretable forms.
+    \item \textbf{Shorter Development Cycles}: Developers can roll out schema changes or expansions more quickly when migrations are automated and versioned.
+\end{enumerate}
+
+\section{Mathematical Foundations for Schema Transformations}
+\label{sec:foundations}
+
+Here, we briefly outline the category-theoretic constructs relevant to schema migration, illustrating how on-demand transformations can be formalized.
+
+\subsection{Schema as a Category}
+Let each schema be represented as a category $\mathcal{C}$, whose:
+\begin{itemize}
+    \item \textbf{Objects}: Represent tables, collections, or entity types.
+    \item \textbf{Morphisms}: Represent relationships (e.g., foreign keys, edges, or references).
+\end{itemize}
+A \textbf{schema instance} is then a functor $I : \mathcal{C} \to \mathbf{Set}$, mapping each object to a set of rows (or documents, or vertices) and each morphism to a function between sets.
+
+\subsection{Migrations as Functors}
+A schema transformation from $\mathcal{C}$ to another schema $\mathcal{D}$ is captured by a functor:
+\begin{equation}
+F: \mathcal{C} \longrightarrow \mathcal{D}.
+\label{eq:functor}
+\end{equation}
+Under such a functor, objects $c \in \mathcal{C}$ map to $F(c) \in \mathcal{D}$, and morphisms $c_1 \to c_2$ map to $F(c_1) \to F(c_2)$. At the level of \emph{instances}, a \emph{migrated} instance $I': \mathcal{D} \to \mathbf{Set}$ can be composed with $F$ to produce:
+\begin{equation}
+I' \circ F : \mathcal{C} \to \mathbf{Set}.
+\end{equation}
+This composition expresses how data in $\mathcal{C}$ is “reinterpreted” in $\mathcal{D}$’s schema.
+
+\subsection{Topos-Theoretic View}
+When dealing with complex schemas or partial knowledge, we may treat $\mathcal{C}$ and $\mathcal{D}$ as \emph{sites} with Grothendieck topologies. The topos of sheaves (or presheaves) over these sites captures local data pieces that “glue” together globally \cite{JohnstoneSketches}.
+
+In many real-world scenarios, we might define a \emph{geometric morphism}:
+\[
+\mathbf{Sh}(\mathcal{C}) \longrightarrow \mathbf{Sh}(\mathcal{D}),
+\]
+where each sheaf in $\mathbf{Sh}(\mathcal{C})$ (data organized under schema $\mathcal{C}$) can be pulled back/pushed forward into $\mathbf{Sh}(\mathcal{D})$. This offers a powerful unifying framework for bridging data across multiple schemas and data models.
+
+\subsection{On-Demand Query Transformations}
+Instead of a single, one-time migration, let us consider a query $Q$ that references data from schema $\mathcal{C}$ but is formulated in terms of $\mathcal{D}$. Define a \emph{schema translation functor} $F: \mathcal{C} \to \mathcal{D}$ plus a function $\phi$ that rewrites $Q_{\mathcal{D}}$ (a query in the language of $\mathcal{D}$) into a query $Q_{\mathcal{C}}$ if data physically resides under $\mathcal{C}$. Concretely, we can define:
+\begin{equation}
+\phi(Q_{\mathcal{D}}) = Q_{\mathcal{C}} \quad \text{such that} \quad \forall I : \mathcal{C} \to \mathbf{Set}, \quad Q_{\mathcal{C}}(I) \simeq Q_{\mathcal{D}}(I' \circ F).
+\end{equation}
+This equation states that applying the rewritten query $Q_{\mathcal{C}}$ to instance $I$ yields the same “answer” as applying $Q_{\mathcal{D}}$ to the migrated instance $I' \circ F$, ensuring the user sees uniform results.
+
+\section{On-Demand Transformations \& Generative AI Agents}
+\subsection{Motivation}
+Generative AI agents often attempt to unify data from many sources to answer high-level questions. For example, an agent might receive a user query like: \emph{“Find the total sales of Product A across all channels, including relational orders, NoSQL logs, and graph-based social recommendations.”}
+
+\subsection{Multi-Model Setup}
+\begin{itemize}
+    \item \textbf{Relational Store} $(\mathcal{C}_R)$: Contains transactions and structured relationships.
+    \item \textbf{Document Store} $(\mathcal{C}_D)$: Holds logs or aggregated JSON records.
+    \item \textbf{Graph DB} $(\mathcal{C}_G)$: Stores user-product relationships or social network data.
+\end{itemize}
+An agent might parse the user request into a “universal” high-level query in $\mathcal{D}$. If the needed data is physically split across $\mathcal{C}_R, \mathcal{C}_D, \mathcal{C}_G$, the system either:
+\begin{enumerate}
+    \item Defines transformations $F_R, F_D, F_G$ to unify them in a single schema $\mathcal{D}$, or
+    \item Dynamically rewrites subqueries for each store and aggregates the results.
+\end{enumerate}
+
+\subsection{Importance of Automated Migrations}
+\label{subsec:automate}
+\begin{itemize}
+    \item \textbf{Minimal Data Duplication}: On-demand transformations can pull or transform data at query time, negating the need for perpetual synchronization.
+    \item \textbf{Consistent Data Models}: By harnessing formal functors and geometric morphisms, organizations ensure that the partial or local data automatically aligns with the global schema constraints.
+    \item \textbf{Generative AI Synergy}: AI agents can learn or infer schema mappings from partial examples, and rely on validated category-theoretic transformations for reliable, real-time integration.
+\end{itemize}
+
+\section{Benefits and Practical Observations}
+\label{sec:benefits}
+\subsection{Reduces Operational Risk}
+Traditional “big-bang” schema migrations can be risky and time-consuming. On-demand transformations localize changes to the relevant queries or data subsets, decreasing downtime.
+
+\subsection{Enables Incremental Adoption}
+Organizations can adopt a unified approach \emph{gradually}, layering new transformations only when necessary. This fosters agility and lowers the barrier to rolling out new data-driven features.
+
+\subsection{Accelerates AI-Driven Insights}
+Generative AI agents benefit from consistent, on-demand transformations because:
+\begin{enumerate}
+    \item They can operate on a “universal schema” while the underlying data remains in place.
+    \item They can quickly adapt to changes in the physical data layout.
+    \item They avoid manually-coded ETL pipelines and harness logic-based transformations for consistent results.
+\end{enumerate}
+
+\section{Sample Haskell Implementation}
+In practice, a functional language like Haskell can elegantly express these transformations. We present a separate-file code snippet in Section~\ref{sec:haskell_code} that demonstrates how categories, functors, and on-demand transformations might be modeled.
+
+\section{Conclusion}
+We have shown how schema migrations, traditionally seen as a one-time event, can instead be deployed \emph{on demand}, enabling queries and generative AI agents to seamlessly traverse multi-model data. By leveraging the formalism of category and topos theory, we achieve consistency, modularity, and extensibility. Future work involves deeper integration of proof assistants for verifying correctness, real-time streaming transformations, and further AI-driven schema discovery.
+
+\paragraph{Acknowledgments}
+We thank the community of category-theoretic database researchers and practitioners who continue to pioneer the use of functors, adjunctions, and topos structures for real-world data problems.
+
+\bibliographystyle{plain}
+\begin{thebibliography}{9}
+
+\bibitem{SpivakFQL} D. I. Spivak. 
+\emph{Functorial Data Migration}. arXiv:1009.1166, 2010.
+
+\bibitem{JohnstoneSketches} P. T. Johnstone. 
+\emph{Sketches of an Elephant: A Topos Theory Compendium}. Oxford University Press, 2002.
+
+\end{thebibliography}
+
+\appendix
+\section{Sample Haskell Code}
+\label{sec:haskell_code}
+
+See file: \texttt{onDemandMigration.hs} for a minimal example of representing schemas, morphisms, and data transformations using Haskell.
+
+\end{document}
